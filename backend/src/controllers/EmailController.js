@@ -60,14 +60,23 @@ module.exports = {
     //console.log("Message sent: %s", info.messageId);
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   },
-  async sendMailWithActivationLink(userEmail, activationLink) {
+  async sendMailWithActivationLink(userEmail, document) {
+    const activationLink = `${process.env.SITE}/activate-user/${document}`;
     const emailOptions = {
       from: "Biomob",
       to: userEmail,
       subject: "Ative sua conta",
       text: `Obrigado por se registrar na Biomob! Falta pouco para você terminar seu cadastro,
-      basta acessar o link a seguir para ativar a sua conta!
-      ${activationLink}`,
+basta acessar o link a seguir para ativar a sua conta!
+${activationLink}`,
     };
+
+    transporter.sendMail(emailOptions, function (err, _) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Email enviado");
+      }
+    });
   },
 };

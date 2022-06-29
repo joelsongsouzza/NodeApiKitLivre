@@ -81,13 +81,15 @@ module.exports = {
           foto_documento64: req.body.foto_documento64,
           foto_com_documento: req.body.foto_com_documento,
           foto_com_documento64: req.body.foto_com_documento64,
-          ativo: 1,
+          ativo: 0,
           nivel: acesso,
         })
         .returning(["nome", "email", "documento"]);
-      email.sendMailWithActivationLink(req.body.email, documento);
+      await email.sendMailWithActivationLink(req.body.email, documento);
+      console.log(results);
       return res.status(201).send({ results, token });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },
@@ -186,6 +188,14 @@ module.exports = {
       token,
       result,
     });
+  },
+  async activateUser(req, res, next) {
+    const document = req.params.document;
+    const result = await knex("Usuario")
+      .withSchema(schemaName)
+      .where({ documento: document })
+      .update({ ativo: true });
+    return res.status(201).send({ result });
   },
   async update(req, res, next) {
     /*var data_de_nascicmento = '';

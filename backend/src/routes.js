@@ -1,57 +1,55 @@
-const jwt = require('jsonwebtoken');
-const routes = require('express').Router();
-const multer = require('multer');
-const multerConfig = require('./config/multer');
-const knex = require('./database');
+const jwt = require("jsonwebtoken");
+const routes = require("express").Router();
+const multer = require("multer");
+const multerConfig = require("./config/multer");
+const knex = require("./database");
 const schemaName = `${process.env.DB_SCHEMA}`;
 
-const SolicitacaoController = require('./controllers/SolicitacaoController')
-const EquipamentoController = require('./controllers/EquipamentoController')
-const BateriaController = require('./controllers/BateriaController')
-const UsuarioController= require('./controllers/UsuarioController')
-const FuncionarioController= require('./controllers/FuncionarioController')
-const ParceiroController= require('./controllers/ParceiroController')
-const EstoqueController = require('./controllers/EstoqueController')
+const SolicitacaoController = require("./controllers/SolicitacaoController");
+const EquipamentoController = require("./controllers/EquipamentoController");
+const BateriaController = require("./controllers/BateriaController");
+const UsuarioController = require("./controllers/UsuarioController");
+const FuncionarioController = require("./controllers/FuncionarioController");
+const ParceiroController = require("./controllers/ParceiroController");
+const EstoqueController = require("./controllers/EstoqueController");
 
-const LesaoController= require('./controllers/LesaoController')
-const StatusController= require('./controllers/StatusController')
-const VideoController= require('./controllers/VideoController')
+const LesaoController = require("./controllers/LesaoController");
+const StatusController = require("./controllers/StatusController");
+const VideoController = require("./controllers/VideoController");
 
 const secret = `${process.env.SECRET}`;
 
-const authMiddleware = async (req, res, next) =>{
-  try{
-    const [, token] = req.headers.authorization.split(' ')
-    var documento
+const authMiddleware = async (req, res, next) => {
+  try {
+    const [, token] = req.headers.authorization.split(" ");
+    var documento;
     jwt.verify(token, secret, (error, decode) => {
-      documento = decode.documento
-    })
-    const resultUser = await knex('Usuario').withSchema(schemaName).where({ documento : documento})
-    if(!resultUser)
-    {
-      const resultPar = await knex('Parceiro').withSchema(schemaName).where({ documento : documento})
-      if(!resultPar)
-      {
-        const resultFun = await knex('Funcionario').withSchema(schemaName).where({ documento : documento})
-        if(!resultFun){
-          return res.status(400).send({ error: 'Usuário não encontrado'});
-        }else{
-          next()
+      documento = decode.documento;
+    });
+    const resultUser = await knex("Usuario").withSchema(schemaName).where({ documento: documento });
+    if (!resultUser) {
+      const resultPar = await knex("Parceiro")
+        .withSchema(schemaName)
+        .where({ documento: documento });
+      if (!resultPar) {
+        const resultFun = await knex("Funcionario")
+          .withSchema(schemaName)
+          .where({ documento: documento });
+        if (!resultFun) {
+          return res.status(400).send({ error: "Usuário não encontrado" });
+        } else {
+          next();
         }
+      } else {
+        next();
       }
-      else
-      {
-        next()
-      }    
+    } else {
+      next();
     }
-    else{
-      next()
-    }
+  } catch (error) {
+    res.status(401).send(error);
   }
-  catch(error){
-    res.status(401).send(error)
-  }
-}
+};
 
 routes.get("/equipamento", EquipamentoController.index);
 routes.get("/equipamento-liberado", EquipamentoController.indexSerie);
@@ -73,6 +71,7 @@ routes.post("/usuario-admin-sem", UsuarioController.createADMNoPass);
 routes.put("/usuario", UsuarioController.update);
 routes.put("/usuario-senha", UsuarioController.update_senha);
 routes.put("/ativar-usuario", UsuarioController.updateAtivo);
+routes.get("/activate-user/:document", UsuarioController.activateUser);
 routes.put("/troca-senha-usuario", UsuarioController.updateSenha);
 routes.get("/usuario-cpf", UsuarioController.indexCPF);
 routes.get("/autenticacao", UsuarioController.authenticate);
@@ -107,14 +106,11 @@ routes.get("/status", StatusController.index);
 routes.get("/funcionario-admin", FuncionarioController.indexAdmin);
 routes.get("/videos", VideoController.index);
 
-
-
 routes.post("/images", multer(multerConfig).single("file"), (req, res) => {
   return res.json(req.file.url);
 });
 
-
-const db = require('./Senha/db')
+const db = require("./Senha/db");
 /*
 não faz sentido
 const utils = require('./Senha/utils')
@@ -133,16 +129,18 @@ routes.post("/routs.users", routs_users.create);
 routes.put("/routs.users", routs_users.update);
 */
 
-routes.post('/forgot', (req, res, next) => {
+routes.post("/forgot", (req, res, next) => {
   db.knex(req.body.email, (err, doc) => {
-    if (err || !doc)
-      res.redirect('/'); //manda pro login mesmo que não ache
-    const newpass = require('../utils').generatePassword();
+    if (err || !doc) res.redirect("/"); //manda pro login mesmo que não ache
+    const newpass = require("../utils").generatePassword();
     db.changePassword(req.body.email, newpass);
-    require('../mail')(req.body.email, 'Sua Nova Senha de Usuário ', 'Olá ' + doc.username + ', sua nova senha é ' + newpass);
-    res.redirect('/');
+    require("../mail")(
+      req.body.email,
+      "Sua Nova Senha de Usuário ",
+      "Olá " + doc.username + ", sua nova senha é " + newpass
+    );
+    res.redirect("/");
   });
-})//nova senha enviada por e-mail(mensagem)
-
+}); //nova senha enviada por e-mail(mensagem)
 
 module.exports = routes;
