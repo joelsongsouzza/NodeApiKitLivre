@@ -72,6 +72,7 @@ routes.put("/usuario", UsuarioController.update);
 routes.put("/usuario-senha", UsuarioController.update_senha);
 routes.put("/ativar-usuario", UsuarioController.updateAtivo);
 routes.get("/activate-user/:document", UsuarioController.activateUser);
+routes.post("/usuario-login", UsuarioController.signIn);
 routes.put("/troca-senha-usuario", UsuarioController.updateSenha);
 routes.get("/usuario-cpf", UsuarioController.indexCPF);
 routes.get("/autenticacao", UsuarioController.authenticate);

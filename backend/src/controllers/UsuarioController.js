@@ -86,10 +86,8 @@ module.exports = {
         })
         .returning(["nome", "email", "documento"]);
       await email.sendMailWithActivationLink(req.body.email, documento);
-      console.log(results);
       return res.status(201).send({ results, token });
     } catch (error) {
-      console.log(error);
       next(error);
     }
   },
@@ -196,6 +194,25 @@ module.exports = {
       .where({ documento: document })
       .update({ ativo: true });
     return res.status(201).send({ result });
+  },
+  async signIn(req, res, next) {
+    const email = req.body.email;
+    const password = req.body.senha;
+    const result = await knex("Usuario").withSchema(schemaName).where({ email: email });
+
+    console.log(result);
+
+    if (result[0] != undefined) {
+      const passwordMatch = await bcrypt.compare(password, result[0].senha);
+      const active = result[0].ativo;
+
+      if (passwordMatch && active) {
+        return res.status(201).send({ result: true, message: "success" });
+      } else if (passwordMatch && !active) {
+        return res.status(500).send({ result: false, message: "need-activate" });
+      }
+    }
+    return res.status(500).send({ result: false, message: "error" });
   },
   async update(req, res, next) {
     /*var data_de_nascicmento = '';
